@@ -1,0 +1,22 @@
+stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station
+WFELL,,Winterfell,,4.0,0.0,,,1,
+WFELL_N,,Winterfell,,4.0,0.0,,,0,WFELL
+WFELL_S,,Winterfell,,4.0,0.0,,,0,WFELL
+DFORT,,Dreadfort,,3.0,0.0,,,1,
+DFORT_N,,Dreadfort,,3.0,0.0,,,0,DFORT
+DFORT_S,,Dreadfort,,3.0,0.0,,,0,DFORT
+TWINS_WOLF,,Twins,,2.0,0.0,,,1,
+TWINS_N,,Twins,,2.0,0.0,,,0,TWINS_WOLF
+TWINS_S,,Twins,,2.0,0.0,,,0,TWINS_WOLF
+TWINS_TROUT,,Twins,,2.0,0.0,,,1,
+TWINS_W,,Twins,,2.0,0.0,,,0,TWINS_TROUT
+TWINS_E,,Twins,,2.0,0.0,,,0,TWINS_TROUT
+KLAND,,King's Landing,,1.0,0.0,,,1,
+KLAND_N,,King's Landing,,1.0,0.0,,,0,KLAND
+KLAND_S,,King's Landing,,1.0,0.0,,,0,KLAND
+FEISL,,Iron Islands,,1.0,-1.0,,,1,
+FEISL_N,,Iron Islands,,1.0,-1.0,,,0,FEISL
+FEISL_S,,Iron Islands,,1.0,-1.0,,,0,FEISL
+EYRIE,,Eyrie,,1.0,1.0,,,1,
+EYRIE_N,,Eyrie,,1.0,1.0,,,0,EYRIE
+EYRIE_S,,Eyrie,,1.0,1.0,,,0,EYRIE

@@ -1,0 +1,3 @@
+route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
+WOLF,WTA,W,Wolf Line,"Trains operate between Winterfell and King's Landing, all times",2,http://localhost,FFFFFF,
+TROUT,WTA,T,Trout Line,"Trains operate between the Iron Islands and the Eyrie via the Twins, all times",2,http://localhost,0000FF,

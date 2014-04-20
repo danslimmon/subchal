@@ -1,0 +1,2 @@
+agency_id,agency_name,agency_url,agency_timezone,agency_lang,agency_phone
+WTA,Westeros Transit Authority,http://localhost/,America/New_York,en,555-555-5555
