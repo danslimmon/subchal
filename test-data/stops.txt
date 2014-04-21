@@ -15,8 +15,8 @@ KLAND,,King's Landing,,1.0,0.0,,,1,
 KLAND_N,,King's Landing,,1.0,0.0,,,0,KLAND
 KLAND_S,,King's Landing,,1.0,0.0,,,0,KLAND
 FEISL,,Iron Islands,,1.0,-1.0,,,1,
-FEISL_N,,Iron Islands,,1.0,-1.0,,,0,FEISL
-FEISL_S,,Iron Islands,,1.0,-1.0,,,0,FEISL
+FEISL_E,,Iron Islands,,1.0,-1.0,,,0,FEISL
+FEISL_W,,Iron Islands,,1.0,-1.0,,,0,FEISL
 EYRIE,,Eyrie,,1.0,1.0,,,1,
-EYRIE_N,,Eyrie,,1.0,1.0,,,0,EYRIE
-EYRIE_S,,Eyrie,,1.0,1.0,,,0,EYRIE
+EYRIE_E,,Eyrie,,1.0,1.0,,,0,EYRIE
+EYRIE_W,,Eyrie,,1.0,1.0,,,0,EYRIE

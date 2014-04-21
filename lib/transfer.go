@@ -11,6 +11,8 @@ type Transfer struct {
     ToStation *Stop
     TransferType int64
     MinTransferTime int64
+
+    ToRoute *Route
 }
 
 // Reads the CSV transfers.txt at the given path
