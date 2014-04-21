@@ -1,0 +1,6 @@
+from_stop_id,to_stop_id,from_route_id,to_route_id
+EYRIE_W,,TROUT,
+FEISL_W,FEISL_E,TROUT,TROUT
+TWINS_E,TWINS_N,TROUT,WOLF
+WFELL_N,WFELL_S,WOLF,WOLF
+KLAND_S,,WOLF,
