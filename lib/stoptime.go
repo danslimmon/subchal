@@ -23,7 +23,7 @@ func (bat ByArrivalTime) Len() int { return len(bat) }
 func (bat ByArrivalTime) Swap(i, j int) { bat[i], bat[j] = bat[j], bat[i] }
 func (bat ByArrivalTime) Less(i, j int) bool { return bat[i].ArrivalTime.Before(bat[j].ArrivalTime) }
 
-// Reads the CSV trips.txt at the given path
+// Reads the CSV stoptimes.txt at the given path
 //
 // 'stops' should be a map as returned by LoadStops()
 //
