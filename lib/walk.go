@@ -2,6 +2,8 @@ package subchal
 
 import (
     "os"
+    "time"
+    "fmt"
     "encoding/csv"
 )
 
@@ -17,9 +19,38 @@ type Routeswitch struct {
 type Walk struct {
     StartStop *Stop
     EndStop *Stop
+    StartTime time.Time
     Routeswitches []Routeswitch
 
     StationVisits map[string]int
+}
+
+
+type SimulationError struct { s string }
+func (e SimulationError) Error() string { return e.s }
+
+
+// Simulates an execution of the Walk through the subway system.
+//
+// Returns the number of seconds that the Walk would take, from the beginning
+// of the first trip to the end of the last.
+//func (wk *Walk) RunSim() (int, error) {
+//    currentStoptime, err := FirstStoptime(wk.StartStop, wk.StartTime)
+//    for _, sw := range wk.Routeswitches {
+//        currentStoptime, err := NextStoptime(sw, currentStoptime)
+//    }
+//    return 0, nil
+//}
+
+
+// Returns the first stoptime from the given Stop after the given time.
+func FirstStoptime(s *Stop, t time.Time) (*Stoptime, error) {
+    for _, st := range s.Stoptimes {
+        if st.DepartureTime.After(t) {
+            return st, nil
+        }
+    }
+    return nil, SimulationError{fmt.Sprintf("No available Stoptimes at '%s' after %s", s.StopID, t.Format("15:04:05"))}
 }
 
 
@@ -30,12 +61,12 @@ type Walk struct {
 // there it goes up to Winterfell and then turns around and goes all
 // the way south to King's Landing.
 //
-//    from_stop_id,to_stop_id,from_route_id,to_route_id
-//    EYRIE_W,,TROUT,
-//    FEISL_W,FEISL_E,TROUT,TROUT
-//    TWINS_E,TWINS_N,TROUT,WOLF
-//    WFELL_N,WFELL_S,WOLF,WOLF
-//    KLAND_S,,WOLF,
+//    from_stop_id,to_stop_id,from_route_id,to_route_id,start_time
+//    EYRIE_W,,TROUT,10:20:07
+//    FEISL_W,FEISL_E,TROUT,TROUT,
+//    TWINS_E,TWINS_N,TROUT,WOLF,
+//    WFELL_N,WFELL_S,WOLF,WOLF,
+//    KLAND_S,,WOLF,,
 func LoadWalk(csvPath string, stops map[string]*Stop, routes map[string]*Route) (*Walk, error) {
     f, err := os.Open(csvPath)
     if err != nil {
@@ -87,6 +118,14 @@ func LoadWalk(csvPath string, stops map[string]*Stop, routes map[string]*Route) 
                 sw.FromRoute = routes[rec[i]]
             case "to_route_id":
                 sw.ToRoute = routes[rec[i]]
+            case "start_time":
+                if rec[i] != "" {
+                    wk.StartTime, err = time.Parse("15:04:05", rec[i])
+                }
+            }
+
+            if err != nil {
+                return nil, err
             }
         }
 
