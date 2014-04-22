@@ -50,12 +50,21 @@ func Test_LoadStoptimes(t *testing.T) {
     }
 
     for stopID, stSlice := range stoptimes {
+        firstSt := stSlice[0]
+        lastSt := stSlice[len(stSlice) - 1]
+        if lastSt.ArrivalTime.Sub(firstSt.ArrivalTime) < 24 * time.Hour {
+            t.Log("Stoptimes for stop", stopID, "were not copied to the next day")
+            t.FailNow()
+        }
+
         for _, st := range stSlice {
             if st.Stop.StopID != stopID {
                 t.Log("Stoptime at stop", st.Stop.StopID, "doesn't match stoptimes key", stopID)
+                t.FailNow()
             }
             if st.Stop.IsStation() {
                 t.Log("Stoptime at stop", st.Stop.StopID, "is a station rather than a stop")
+                t.FailNow()
             }
         }
     }
