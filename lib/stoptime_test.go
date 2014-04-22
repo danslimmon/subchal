@@ -2,7 +2,36 @@ package subchal
 
 import (
     "testing"
+    "time"
 )
+
+func Test_Stoptime_DayLater(t *testing.T) {
+    t.Parallel()
+    SetTestLogger(t)
+
+    initialTime, _ := time.Parse("15:04:05", "11:32:19")
+    st := Stoptime{
+        "A20131215WKD_WOLF_NS_01",
+        initialTime,
+        initialTime,
+        nil,
+        1,
+        "",
+    }
+    newSt := st.DayLater()
+
+    switch false {
+    case newSt.TripID == st.TripID:
+        t.Log("Stoptime.DayLater() didn't preserve TripID")
+        t.FailNow()
+    case 24 * time.Hour == newSt.ArrivalTime.Sub(st.ArrivalTime):
+        t.Log("Stoptime.DayLater() didn't transform ArrivalTime")
+        t.FailNow()
+    case 24 * time.Hour == newSt.DepartureTime.Sub(st.DepartureTime):
+        t.Log("Stoptime.DayLater() didn't transform DepartureTime")
+        t.FailNow()
+    }
+}
 
 func Test_LoadStoptimes(t *testing.T) {
     t.Parallel()
