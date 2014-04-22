@@ -2,36 +2,7 @@ package subchal
 
 import (
     "testing"
-    "time"
 )
-
-func Test_Stoptime_DayLater(t *testing.T) {
-    t.Parallel()
-    SetTestLogger(t)
-
-    initialTime, _ := time.Parse("15:04:05", "11:32:19")
-    st := Stoptime{
-        "A20131215WKD_WOLF_NS_01",
-        initialTime,
-        initialTime,
-        nil,
-        1,
-        "",
-    }
-    newSt := st.DayLater()
-
-    switch false {
-    case newSt.TripID == st.TripID:
-        t.Log("Stoptime.DayLater() didn't preserve TripID")
-        t.FailNow()
-    case 24 * time.Hour == newSt.ArrivalTime.Sub(st.ArrivalTime):
-        t.Log("Stoptime.DayLater() didn't transform ArrivalTime")
-        t.FailNow()
-    case 24 * time.Hour == newSt.DepartureTime.Sub(st.DepartureTime):
-        t.Log("Stoptime.DayLater() didn't transform DepartureTime")
-        t.FailNow()
-    }
-}
 
 func Test_LoadStoptimes(t *testing.T) {
     t.Parallel()
@@ -50,13 +21,6 @@ func Test_LoadStoptimes(t *testing.T) {
     }
 
     for stopID, stSlice := range stoptimes {
-        firstSt := stSlice[0]
-        lastSt := stSlice[len(stSlice) - 1]
-        if lastSt.ArrivalTime.Sub(firstSt.ArrivalTime) < 24 * time.Hour {
-            t.Log("Stoptimes for stop", stopID, "were not copied to the next day")
-            t.FailNow()
-        }
-
         for _, st := range stSlice {
             if st.Stop.StopID != stopID {
                 t.Log("Stoptime at stop", st.Stop.StopID, "doesn't match stoptimes key", stopID)
