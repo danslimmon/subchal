@@ -19,10 +19,20 @@ type Stop struct {
     ParentStation *Stop
 
     ParentStationID string
+    Stoptimes []*Stoptime
 }
 
 func (s *Stop) IsStation() (bool) {
     return (s.ParentStation == nil)
+}
+
+
+// Associates the array of matching Stoptimes with each Stop.
+func AddStoptimesToStops(stops map[string]*Stop, stoptimes map[string][]*Stoptime) error {
+    for stopID, stop := range stops {
+        stop.Stoptimes = stoptimes[stopID]
+    }
+    return nil
 }
 
 

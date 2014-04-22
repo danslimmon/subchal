@@ -17,6 +17,17 @@ type Stoptime struct {
     StopHeadsign string
 }
 
+func (st *Stoptime) DayLater() (*Stoptime) {
+    newSt := new(Stoptime)
+    newSt.TripID = st.TripID
+    newSt.ArrivalTime = st.ArrivalTime.Add(24 * time.Hour)
+    newSt.DepartureTime = st.DepartureTime.Add(24 * time.Hour)
+    newSt.Stop = st.Stop
+    newSt.StopSequence = st.StopSequence
+    newSt.StopHeadsign = st.StopHeadsign
+    return newSt
+}
+
 // ByArrivalTime implements sort.Interface for []*Stoptime based on the ArrivalTime field.
 type ByArrivalTime []*Stoptime
 func (bat ByArrivalTime) Len() int { return len(bat) }
@@ -25,9 +36,10 @@ func (bat ByArrivalTime) Less(i, j int) bool { return bat[i].ArrivalTime.Before(
 
 // Reads the CSV stoptimes.txt at the given path
 //
-// 'stops' should be a map as returned by LoadStops()
+// 'stops' should be a map as returned by LoadStops().
 //
 // Returns a map[StopID string][]*Stoptime. The []*Stoptime will be ordered by ArrivalTime.
+// We will cycle back through the Stoptimes to create an extra virtual day of them.
 func LoadStoptimes(csvPath string, stops map[string]*Stop) (map[string][]*Stoptime, error) {
     f, err := os.Open(csvPath)
     if err != nil {
@@ -71,6 +83,8 @@ func LoadStoptimes(csvPath string, stops map[string]*Stop) (map[string][]*Stopti
         }
 
         stoptimes[st.Stop.StopID] = append(stoptimes[st.Stop.StopID], st)
+        // Copy this Stoptime to tomorrow so we can cycle through midnight
+        stoptimes[st.Stop.StopID] = append(stoptimes[st.Stop.StopID], st.DayLater())
     }
 
     // Order each slice of *Stoptimes by ArrivalTime.
