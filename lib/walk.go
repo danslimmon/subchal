@@ -3,7 +3,6 @@ package subchal
 import (
     "os"
     "time"
-    "fmt"
     "encoding/csv"
 )
 
@@ -43,14 +42,18 @@ func (e SimulationError) Error() string { return e.s }
 //}
 
 
-// Returns the first stoptime from the given Stop after the given time.
-func FirstStoptime(s *Stop, t time.Time) (*Stoptime, error) {
+// Determines the next stoptime from the given Stop after the given time.
+//
+// Also returns an integer indicating the number of times we passed midnight.
+func NextStoptime(s *Stop, t time.Time) (*Stoptime, int, error) {
     for _, st := range s.Stoptimes {
         if st.DepartureTime.After(t) {
-            return st, nil
+            return st, 0, nil
         }
     }
-    return nil, SimulationError{fmt.Sprintf("No available Stoptimes at '%s' after %s", s.StopID, t.Format("15:04:05"))}
+
+    // We had to go past midnight
+    return s.Stoptimes[0], 1, nil
 }
 
 
