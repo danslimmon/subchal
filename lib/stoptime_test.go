@@ -2,6 +2,7 @@ package subchal
 
 import (
     "testing"
+    "time"
 )
 
 func Test_LoadStoptimes(t *testing.T) {
@@ -33,3 +34,44 @@ func Test_LoadStoptimes(t *testing.T) {
         }
     }
 }
+
+func Test_ParseTime(t *testing.T) {
+    t.Parallel()
+    SetTestLogger(t)
+
+    rslt, err := ParseTime("00:00:00")
+    switch false {
+    case err == nil:
+        t.Log("Got error from ParseTime:", err)
+        t.FailNow()
+    case VerifyZeroDay(rslt) && rslt.Hour() == 0 && rslt.Minute() == 0 && rslt.Second() == 0:
+        t.Log("ParseTime produced an incorrect time:", rslt.Format("2006-01-02 15:04:05 MST"))
+        t.FailNow()
+    }
+
+    rslt, err = ParseTime("13:59:06")
+    switch false {
+    case err == nil:
+        t.Log("Got error from ParseTime:", err)
+        t.FailNow()
+    case VerifyZeroDay(rslt) && rslt.Hour() == 13 && rslt.Minute() == 59 && rslt.Second() == 6:
+        t.Log("ParseTime produced an incorrect time:", rslt.Format("2006-01-02 15:04:05 MST"))
+        t.FailNow()
+    }
+
+    rslt, err = ParseTime("25:00:14")
+    switch false {
+    case err == nil:
+        t.Log("Got error from ParseTime:", err)
+        t.FailNow()
+    case VerifyZeroDay(rslt) && rslt.Hour() == 1 && rslt.Minute() == 0 && rslt.Second() == 14:
+        t.Log("ParseTime produced an incorrect time:", rslt.Format("2006-01-02 15:04:05 MST"))
+        t.FailNow()
+    }
+}
+
+// Verifies that the given time.Time occurs on the zero day (0000-01-01)
+func VerifyZeroDay(t time.Time) bool {
+    return (t.Year() == 0 && t.YearDay() == 1)
+}
+
