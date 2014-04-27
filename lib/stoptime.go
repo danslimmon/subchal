@@ -85,9 +85,9 @@ func LoadStoptimes(csvPath string, stops map[string]*Stop) (map[string][]*Stopti
 
 // Converts a schedule time (e.g. "11:36:14") to a time.Time object.
 //
-// The time zone will be UTC. The date will be the zero date
-// (January 1, 0001). This function handles times past midnight (e.g. 25:04:00)
-// by simply subtracting 24 from the hour.
+// The time zone will be UTC. The date will be the reference date
+// (January 2, 2006). This function handles times past midnight (e.g. 25:04:00)
+// by dumbly subtracting 24 from the hour.
 func ParseTime(timeStr string) (t time.Time, err error) {
     timeParts := strings.Split(timeStr, ":")
     hour, err := strconv.ParseInt(timeParts[0], 10, 8)
@@ -103,6 +103,7 @@ func ParseTime(timeStr string) (t time.Time, err error) {
         }, ":")
     }
 
-    t, err = time.Parse("15:04:05", timeStr)
+    t, err = time.Parse("2006-01-02 15:04:05 UTC",
+                        strings.Join([]string{"2006-01-02", timeStr, "UTC"}, " "))
     return
 }

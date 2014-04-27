@@ -19,7 +19,7 @@ func CountFileLines(path string) (int, error) {
 }
 
 func confidentParseTime(timeStr string) time.Time {
-    t, _ := time.Parse("15:04:05", timeStr)
+    t, _ := ParseTime(timeStr)
     return t
 }
 
@@ -30,8 +30,8 @@ func Test_NextStoptime(t *testing.T) {
     s := new(Stop)
     s.Stoptimes = []*Stoptime{
         &Stoptime{
-            ArrivalTime: confidentParseTime("01:17:06"),
-            DepartureTime: confidentParseTime("01:17:06"),
+            ArrivalTime: confidentParseTime("25:17:06"),
+            DepartureTime: confidentParseTime("25:17:06"),
             Stop: s,
         },
         &Stoptime{
@@ -70,7 +70,7 @@ func Test_NextStoptime(t *testing.T) {
         t.Log("Got error from NextStoptime:", err)
         t.FailNow()
     case days == 1:
-        t.Log("Didn't go forward a day when we should've")
+        t.Log("Didn't go forward a day when we should've", st)
         t.FailNow()
     case st.ArrivalTime.Equal(confidentParseTime("01:17:06")):
         t.Log("Got wrong ArrivalTime from NextStoptime:", st.ArrivalTime.Format("15:04:05"))
