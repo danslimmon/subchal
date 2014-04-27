@@ -17,7 +17,7 @@ type Transfer struct {
 
 // Reads the CSV transfers.txt at the given path
 //
-// Returns a map[StopID string][]*Transfer
+// Returns a map[FromStopID string][]*Transfer
 func LoadTransfers(csvPath string, stations map[string]*Stop) (map[string][]*Transfer, error) {
     f, err := os.Open(csvPath)
     if err != nil {

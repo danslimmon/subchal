@@ -24,6 +24,27 @@ func Test_AddStoptimesToStops(t *testing.T) {
     }
 }
 
+func Test_AddTransfersToStations(t *testing.T) {
+    t.Parallel()
+    SetTestLogger(t)
+
+    _, stations, err := LoadStops("../test-data/stops.txt")
+    transfers, err := LoadTransfers("../test-data/transfers.txt", stations)
+    if err != nil {
+        t.Log("Failed to load a necessary GTFS file:", err)
+        t.FailNow()
+    }
+    AddTransfersToStations(stations, transfers)
+
+    for _, s := range stations {
+        if len(s.Transfers) < 1 {
+            t.Log("Failed to associate transfers with station", s.StopID)
+            t.FailNow()
+        }
+    }
+}
+
+
 func Test_LoadStops(t *testing.T) {
     t.Parallel()
     SetTestLogger(t)
