@@ -6,6 +6,8 @@ import (
     "time"
     "io/ioutil"
     "strings"
+    "database/sql"
+    _ "github.com/mattn/go-sqlite3"
 )
 
 func CountFileLines(path string) (int, error) {
@@ -23,57 +25,33 @@ func confidentParseTime(timeStr string) time.Time {
     return t
 }
 
-func Test_NextStoptime(t *testing.T) {
+func Test_TimeToTransfer(t *testing.T) {
     t.Parallel()
     SetTestLogger(t)
 
-    s := new(Stop)
-    s.Stoptimes = []*Stoptime{
-        &Stoptime{
-            ArrivalTime: confidentParseTime("25:17:06"),
-            DepartureTime: confidentParseTime("25:17:06"),
-            Stop: s,
-        },
-        &Stoptime{
-            ArrivalTime: confidentParseTime("06:19:55"),
-            DepartureTime: confidentParseTime("06:19:55"),
-            Stop: s,
-        },
-        &Stoptime{
-            ArrivalTime: confidentParseTime("12:47:00"),
-            DepartureTime: confidentParseTime("12:47:00"),
-            Stop: s,
-        },
-        &Stoptime{
-            ArrivalTime: confidentParseTime("18:30:31"),
-            DepartureTime: confidentParseTime("18:30:31"),
-            Stop: s,
-        },
-    }
-
-    st, days, err := NextStoptime(s, confidentParseTime("10:00:00"))
-    switch false {
-    case err == nil:
-        t.Log("Got error from NextStoptime:", err)
-        t.FailNow()
-    case days == 0:
-        t.Log("Went forward a day when we shouldn't've")
-        t.FailNow()
-    case st.ArrivalTime.Equal(confidentParseTime("12:47:00")):
-        t.Log("Got wrong ArrivalTime from NextStoptime:", st.ArrivalTime.Format("15:04:05"))
+    db, err := sql.Open("sqlite3", "../test-data/subchal.sqlite")
+    if err != nil {
+        t.Log("Error opening SQLite database:", err)
         t.FailNow()
     }
 
-    st, days, err = NextStoptime(s, confidentParseTime("18:30:32"))
-    switch false {
-    case err == nil:
-        t.Log("Got error from NextStoptime:", err)
+    m, err := TimeToTransfer(db, "WFELL_S", "WFELL_S", "WOLF", confidentParseTime("09:40:00"))
+    if err != nil {
+        t.Log("Error calculating transfer time:", err)
         t.FailNow()
-    case days == 1:
-        t.Log("Didn't go forward a day when we should've", st)
+    }
+    if m != 30 * 60 + 90 {
+        t.Log("Got incorrect transfer time:", m)
         t.FailNow()
-    case st.ArrivalTime.Equal(confidentParseTime("01:17:06")):
-        t.Log("Got wrong ArrivalTime from NextStoptime:", st.ArrivalTime.Format("15:04:05"))
+    }
+
+    m, err = TimeToTransfer(db, "TWINS_N", "TWINS_E", "TROUT", confidentParseTime("15:12:00"))
+    if err != nil {
+        t.Log("Error calculating transfer time:", err)
+        t.FailNow()
+    }
+    if m != 21 * 1800 + 90 {
+        t.Log("Got incorrect transfer time:", m)
         t.FailNow()
     }
 }
@@ -84,9 +62,7 @@ func Test_LoadWalk(t *testing.T) {
     SetTestLogger(t)
 
     wkLineCount, _ := CountFileLines("../test-data/walk.txt")
-    stops, _, _ := LoadStops("../test-data/stops.txt")
-    routes, _ := LoadRoutes("../test-data/routes.txt")
-    wk, err := LoadWalk("../test-data/walk.txt", stops, routes)
+    wk, err := LoadWalk("../test-data/walk.txt")
 
     switch false {
     case err == nil:

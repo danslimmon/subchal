@@ -76,8 +76,8 @@ print """CREATE TABLE transfers (
             transfer_type STRING,
             min_transfer_time NUMBER
         );"""
-with open('/'.join([sys.argv[1], 'trips.txt'])) as csv_file:
+with open('/'.join([sys.argv[1], 'transfers.txt'])) as csv_file:
     reader = csv.reader(csv_file)
     header = reader.next()
     for row in reader:
-        print "INSERT INTO trips (" + ", ".join(header) + ") VALUES " + '("' + '", "'.join(row) + '");'
+        print "INSERT INTO transfers (" + ", ".join(header) + ") VALUES " + '("' + '", "'.join(row) + '");'
