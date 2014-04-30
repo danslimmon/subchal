@@ -35,6 +35,7 @@ func Test_TimeToTransfer(t *testing.T) {
         t.FailNow()
     }
 
+    // Test a normal transfer
     m, err := TimeToTransfer(db, "WFELL_S", "WFELL_S", "WOLF", confidentParseTime("09:40:00"))
     if err != nil {
         t.Log("Error calculating transfer time:", err)
@@ -45,6 +46,7 @@ func Test_TimeToTransfer(t *testing.T) {
         t.FailNow()
     }
 
+    // Test a transfer that cycles through midnight
     m, err = TimeToTransfer(db, "TWINS_N", "TWINS_E", "TROUT", confidentParseTime("15:12:00"))
     if err != nil {
         t.Log("Error calculating transfer time:", err)
@@ -54,6 +56,14 @@ func Test_TimeToTransfer(t *testing.T) {
         t.Log("Got incorrect transfer time:", m)
         t.FailNow()
     }
+
+    // Test a transfer that doesn't exist
+    m, err = TimeToTransfer(db, "EYRIE_W", "DFORT_N", "WOLF", confidentParseTime("12:25:00"))
+    if err == nil {
+        t.Log("Didn't get an error from TimeToTransfer when we should've")
+        t.FailNow()
+    }
+
 }
 
 
