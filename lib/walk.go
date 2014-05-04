@@ -111,8 +111,7 @@ func TimeToTransfer(db *sql.DB, fromStop string, toStop string, route string, t 
             )
         LIMIT 1;
     `, fromStop, toStop)
-    if err != nil { return 0, err }
-    var transferTime int;
+    var transferTime int
     err = transferTimeRow.Scan(&transferTime)
     if err != nil {
         return 0, SimulationError{fmt.Sprintf("No transfers possible from %s to %s", fromStop, toStop)}
@@ -121,6 +120,97 @@ func TimeToTransfer(db *sql.DB, fromStop string, toStop string, route string, t 
     return (transferTime + interval)/2, nil
 }
 
+
+// Finds the number of seconds it will take to travel the given segment near the given time.
+func TimeToTravel(db *sql.DB, fromStop string, toStop string, route string, t time.Time) (int, error) {
+    formattedTime := t.Format("15:04:05")
+    dayCycled := 0
+
+    // Find the next trip on route `route` that leaves from `fromStop` in the direction of `toStop`
+    tripIDRow := db.QueryRow(`
+        SELECT t.trip_id
+        FROM trips t
+            JOIN stop_times st ON t.trip_id = st.trip_id
+        WHERE st.stop_id = ?
+          AND t.route_id = ?
+          AND st.departure_time > ?
+        ORDER BY st.departure_time ASC
+        LIMIT 1;
+    `, fromStop, route, formattedTime)
+    var tripID string
+    err := tripIDRow.Scan(&tripID)
+    if err != nil {
+        // We couldn't find any trips after `t`, so we'll cycle over to
+        // the next day
+        dayCycled = 1
+        tripIDRow := db.QueryRow(`
+            SELECT t.trip_id
+            FROM trips t
+                JOIN stop_times st ON t.trip_id = st.trip_id
+            WHERE st.stop_id = ?
+              AND t.route_id = ?
+            ORDER BY st.departure_time ASC
+            LIMIT 1;
+        `, fromStop, route)
+        err = tripIDRow.Scan(&tripID)
+        if err != nil {
+            return 0, SimulationError{
+                fmt.Sprintf("No trips from %s to %s after %s", fromStop, toStop, formattedTime),
+            }
+        }
+    }
+
+    departureTime, err := TimeFromQuery(db, `
+        SELECT st.departure_time
+        FROM stop_times st
+        WHERE st.stop_id = ?
+          AND st.trip_id = ?;
+    `, fromStop, tripID)
+    if err != nil  {
+        return 0, err
+    }
+    if dayCycled == 1 {
+        departureTime = departureTime.Add(24 * time.Hour)
+    }
+
+    arrivalTime, err := TimeFromQuery(db, `
+        SELECT st.arrival_time
+        FROM stop_times st
+        WHERE st.stop_id = ?
+          AND st.trip_id = ?;
+    `, toStop, tripID)
+    if err != nil {
+        return 0, err
+    }
+    if arrivalTime.Before(departureTime) {
+        arrivalTime = arrivalTime.Add(24 * time.Hour)
+    }
+
+    return int(arrivalTime.Sub(departureTime).Seconds()), nil
+}
+
+
+// Parses a time.Time out of a single DB row returned by the given query.
+//
+// Takes the same arguments as QueryRow: a query followed by zero or more
+// strings to interpolate into that query.
+func TimeFromQuery(db *sql.DB, query string, params ...interface{}) (time.Time, error) {
+    var tStr string
+    tRow := db.QueryRow(query, params...)
+    err := tRow.Scan(&tStr)
+    if err != nil {
+        return time.Time{}, err
+    }
+
+    t, err := ParseTime(tStr)
+    if err != nil {
+        return time.Time{}, SimulationError{
+            fmt.Sprintf("Malformatted time: %s", tStr),
+        }
+    }
+
+    return t, nil
+}
 
 // Loads an initial Walk from the specified CSV file.
 //
