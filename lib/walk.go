@@ -35,14 +35,15 @@ func (e SimulationError) Error() string { return e.s }
 //
 // Returns the number of seconds that the Walk would take, from the beginning
 // of the first trip to the end of the last.
-//func (wk *Walk) RunSim() (int, error) {
-//    currentStoptime, err := FirstStoptime(wk.StartStop, wk.StartTime)
-//    for _, sw := range wk.Routeswitches {
-//        currentStoptime, err := NextStoptime(sw, currentStoptime)
-//    }
-//    return 0, nil
-//}
-
+/*
+func (wk *Walk) RunSim(db *sql.DB) (int, error) {
+    dur := 0
+    for _, sw := range wk.Routeswitches {
+        currentStoptime, err := NextStoptime(sw, currentStoptime)
+    }
+    return 0, nil
+}
+*/
 
 // Determines the number of seconds it will take to transfer to the
 // given route from the given stop at the given time.
