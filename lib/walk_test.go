@@ -117,8 +117,11 @@ func Test_LoadWalk(t *testing.T) {
     case err == nil:
         t.Log("Got error from LoadWalk():", err)
         t.FailNow()
-    case wk != nil:
-        t.Log("wait what")
+    case ! (wk.StartTime.Equal(time.Time{})):
+        t.Log("Time not populated for Walk", wk.StartTime)
+        t.FailNow()
+    case len(wk.Steps) > 2:
+        t.Log("Not enough steps loaded for walk")
         t.FailNow()
     }
 }

@@ -1,7 +1,7 @@
 ---
 start_station: Eyrie
-start_time: 10:20:00
-end_station: King's Landing
+start_time: "10:20:00"
+end_station: "King's Landing"
 steps:
 
   # Turn around
