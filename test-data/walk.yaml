@@ -1,0 +1,19 @@
+---
+start_station: Eyrie
+start_time: 10:20:00
+end_station: King's Landing
+steps:
+
+  # Turn around
+  - from_station: Iron Islands
+    to_station: Iron Islands
+    to_route: Trout
+
+  - from_station: Twins
+    to_station: Twins
+    to_route: Wolf
+
+  # Turn around
+  - from_station: Winterfell
+    to_station: Winterfell
+    to_route: Wolf

@@ -4,21 +4,9 @@ import (
     "testing"
 
     "time"
-    "io/ioutil"
-    "strings"
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
 )
-
-func CountFileLines(path string) (int, error) {
-    contentsBytes, err := ioutil.ReadFile(path)
-    contents := string(contentsBytes)
-    if err != nil {
-        return 0, err
-    }
-    contents = strings.TrimRight(contents, "\n")
-    return strings.Count(contents, "\n") + 1, nil
-}
 
 func confidentParseTime(timeStr string) time.Time {
     t, _ := ParseTime(timeStr)
@@ -123,16 +111,14 @@ func Test_LoadWalk(t *testing.T) {
     t.Parallel()
     SetTestLogger(t)
 
-    wkLineCount, _ := CountFileLines("../test-data/walk.txt")
-    wk, err := LoadWalk("../test-data/walk.txt")
+    wk, err := LoadWalk("../test-data/walk.yaml")
 
     switch false {
     case err == nil:
         t.Log("Got error from LoadWalk():", err)
         t.FailNow()
-    case len(wk.Routeswitches) == wkLineCount - 3:
-        t.Log("Didn't load the right number of Routeswitches; loaded",
-              len(wk.Routeswitches), "instead of", wkLineCount - 3)
+    case wk != nil:
+        t.Log("wait what")
         t.FailNow()
     }
 }

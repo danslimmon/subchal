@@ -4,25 +4,31 @@ import (
     "os"
     "fmt"
     "time"
-    "encoding/csv"
+    "io/ioutil"
     "database/sql"
+
+    "launchpad.net/goyaml"
 )
 
-// A transfer from one route to another, as included in a Walk.
-type Routeswitch struct {
-    FromStop string
-    ToStop string
-    FromRoute string
-    ToRoute string
+// A transfer from one route to another, or a turnaround, as included in a Walk.
+type Step struct {
+    FromStation string `from_station`
+    ToStation string `to_station`
+    ToRoute string `to_route`
 }
 
 // A complete walk through the subway, touching every station at least once.
 type Walk struct {
-    StartStop string
-    EndStop string
-    StartTime time.Time
-    Routeswitches []Routeswitch
+    StartStation string `start_station`
+    EndStation string `end_station`
+    // StartTime is tagged with a nonexistent variable name so that
+    // goyaml.Marshal doesn't try to populate it
+    StartTime time.Time `nonexistent`
+    Steps []Step `steps`
 
+    // Gets converted to a time.Time and placed in StartTime
+    StartTimeStr string `start_time`
+    // Counts visits to stations so we can make sure we hit them all
     StationVisits map[string]int
 }
 
@@ -213,87 +219,25 @@ func TimeFromQuery(db *sql.DB, query string, params ...interface{}) (time.Time, 
     return t, nil
 }
 
-// Loads an initial Walk from the specified CSV file.
-//
-// The following example travels from the Eyrie west to the Iron
-// Islands, then back to the Twins to transfer to the Wolf line. From
-// there it goes up to Winterfell and then turns around and goes all
-// the way south to King's Landing.
-//
-//    from_stop_id,to_stop_id,from_route_id,to_route_id,start_time
-//    EYRIE_W,,TROUT,10:20:07
-//    FEISL_W,FEISL_E,TROUT,TROUT,
-//    TWINS_E,TWINS_N,TROUT,WOLF,
-//    WFELL_N,WFELL_S,WOLF,WOLF,
-//    KLAND_S,,WOLF,,
-func LoadWalk(csvPath string) (*Walk, error) {
-    f, err := os.Open(csvPath)
+// Loads an initial Walk from the specified YAML
+func LoadWalk(yamlPath string) (*Walk, error) {
+    f, err := os.Open(yamlPath)
     if err != nil {
         return nil, err
     }
     defer f.Close()
 
-    csvReader := csv.NewReader(f)
-    colNames, err := csvReader.Read()
-    if err != nil {
-        return nil, err
-    }
-
-    records, err := csvReader.ReadAll()
+    yamlBytes, err := ioutil.ReadAll(f)
     if err != nil {
         return nil, err
     }
 
     wk := new(Walk)
-    routeswitches := make([]Routeswitch, 0)
-    for _, rec := range records {
-        sw := new(Routeswitch)
-        for i, colName := range colNames {
-            if sw == nil {
-                // This happens if we just processed a starting line
-                continue
-            }
-
-            switch colName {
-            case "from_stop_id":
-                sw.FromStop = rec[i]
-            case "to_stop_id":
-                if rec[i] == "" {
-                    // This is either the beginning or ending of the walk.
-                    if len(routeswitches) == 0 {
-                        wk.StartStop = sw.FromStop
-                        sw = nil
-                        break
-                    } else {
-                        wk.EndStop = sw.FromStop
-                        sw = nil
-                        break
-                    }
-                } else {
-                    // Normal (non-beginning-or-ending) routeswitch
-                    sw.ToStop = rec[i]
-                }
-            case "from_route_id":
-                sw.FromRoute = rec[i]
-            case "to_route_id":
-                sw.ToRoute = rec[i]
-            case "start_time":
-                if rec[i] != "" {
-                    wk.StartTime, err = time.Parse("15:04:05", rec[i])
-                }
-            }
-
-            if err != nil {
-                return nil, err
-            }
-        }
-
-        if sw != nil {
-            // sw will be nil if we just processed a starting or ending line
-            routeswitches = append(routeswitches, *sw)
-        }
+    goyaml.Unmarshal(yamlBytes, wk)
+    wk.StartTime, err = time.Parse("15:04:05", wk.StartTimeStr)
+    if err != nil {
+        return nil, err
     }
 
-    wk.Routeswitches = routeswitches
     return wk, nil
 }
