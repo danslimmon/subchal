@@ -20,10 +20,11 @@ type Step struct {
 // A complete walk through the subway, touching every station at least once.
 type Walk struct {
     StartStation string `start_station`
-    EndStation string `end_station`
+    StartRoute string `start_route`
     // StartTime is tagged with a nonexistent variable name so that
     // goyaml.Marshal doesn't try to populate it
     StartTime time.Time `nonexistent`
+    EndStation string `end_station`
     Steps []Step `steps`
 
     // Gets converted to a time.Time and placed in StartTime
@@ -41,19 +42,71 @@ func (e SimulationError) Error() string { return e.s }
 //
 // Returns the number of seconds that the Walk would take, from the beginning
 // of the first trip to the end of the last.
-/*
 func (wk *Walk) RunSim(db *sql.DB) (int, error) {
     dur := 0
-    for _, sw := range wk.Routeswitches {
-        currentStoptime, err := NextStoptime(sw, currentStoptime)
-    }
+    t := wk.StartTime
+    dt, err := TimeToTransfer(db, t,
+                              wk.StartStation, wk.StartStation, wk.StartRoute,
+                              wk.Steps[0].FromStation)
+    if err != nil { return 0, err }
+    t.Add(time.Duration(dt) * time.Second)
+    dur += int(t.Sub(wk.StartTime).Seconds())
+    return dur, nil
     return 0, nil
 }
-*/
+
+
+// Finds the stop_id of all stations and stops with the given name
+func StopIDsFromName(db *sql.DB, stopName string) ([]string, error) {
+    stopIDs := make([]string, 0)
+    stopRows, err := db.Query(`
+        SELECT s.stop_id
+        FROM stops s
+        WHERE s.stop_name = ?;
+        `, stopName)
+    if err != nil { return stopIDs, err }
+    for stopRows.Next() {
+        var stopID string
+        err = stopRows.Scan(&stopID)
+        if err != nil { return stopIDs, SimulationError{"Error getting stop ID from database"} }
+        stopIDs = append(stopIDs, stopID)
+    }
+    if len(stopIDs) < 1 {
+        return stopIDs, SimulationError{fmt.Sprintf("No station with name '%s'", stopName)}
+    }
+    return stopIDs, nil
+}
+
 
 // Determines the number of seconds it will take to transfer to the
 // given route from the given stop at the given time.
-func TimeToTransfer(db *sql.DB, fromStop string, toStop string, route string, t time.Time) (int, error) {
+func TimeToTransfer(db *sql.DB, t time.Time,
+                    fromStation string, toStation string, toRoute string,
+                    towardStationName string) (int, error) {
+
+    towardStation, err := StopIDsFromName(db, towardStationName)
+    if err != nil { return 0, err }
+
+//    toStopID, err := StopGoingToward(towardStation)
+//    if err != nil { return 0, err }
+
+    // First we need to find the stops that are contained in the given
+    // station.
+    stopRows, err := db.Query(`
+        SELECT s.stop_id
+        FROM stops s
+        WHERE s.parent_station = ?;
+        `, toStation)
+    if err != nil { return 0, err }
+    toStops := make([]string, 0)
+    for stopRows.Next() {
+        var stopID string
+        stopRows.Scan(&stopID)
+        toStops = append(toStops, stopID)
+    }
+    if err != nil {
+        return 0, SimulationError{fmt.Sprintf("No stops with parent station '%s'", towardStation)}
+    }
 
     timeStringRows, err := db.Query(`
         SELECT st.departure_time
@@ -63,7 +116,7 @@ func TimeToTransfer(db *sql.DB, fromStop string, toStop string, route string, t 
         WHERE st.stop_id = ?
           AND r.route_id = ?
         ORDER BY departure_time ASC;
-    `, toStop, route)
+    `, toStation, toRoute)
     if err != nil { return 0, err }
     var timeStrings []string
     for timeStringRows.Next() {
@@ -79,7 +132,7 @@ func TimeToTransfer(db *sql.DB, fromStop string, toStop string, route string, t 
         times = append(times, t)
     }
     if len(times) < 1 {
-        return 0, SimulationError{fmt.Sprintf("No stoptimes found for stop %s and route %s", toStop, route)}
+        return 0, SimulationError{fmt.Sprintf("No stoptimes found for stop %s and route %s", toStation, toRoute)}
     }
 
     // Find the next 2 stop times
@@ -117,11 +170,11 @@ func TimeToTransfer(db *sql.DB, fromStop string, toStop string, route string, t 
             WHERE s.stop_id = ?
             )
         LIMIT 1;
-    `, fromStop, toStop)
+    `, fromStation, toStation)
     var transferTime int
     err = transferTimeRow.Scan(&transferTime)
     if err != nil {
-        return 0, SimulationError{fmt.Sprintf("No transfers possible from %s to %s", fromStop, toStop)}
+        return 0, SimulationError{fmt.Sprintf("No transfers possible from %s to %s", fromStation, toStation)}
     }
 
     return (transferTime + interval)/2, nil

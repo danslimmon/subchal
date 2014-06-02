@@ -4,6 +4,7 @@ import (
     "testing"
 
     "time"
+    "strings"
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
 )
@@ -12,6 +13,36 @@ func confidentParseTime(timeStr string) time.Time {
     t, _ := ParseTime(timeStr)
     return t
 }
+
+func Test_StopIDFromName(t *testing.T) {
+    t.Parallel()
+    SetTestLogger(t)
+
+    db, err := sql.Open("sqlite3", "../test-data/subchal.sqlite")
+    if err != nil {
+        t.Log("Error opening SQLite database:", err)
+        t.FailNow()
+    }
+
+    stopIDs, err := StopIDsFromName(db, "Winterfell")
+    if err != nil {
+        t.Log("Error determining station ID from name:", err)
+        t.FailNow()
+    }
+    for _, stopID := range stopIDs {
+        if ! strings.HasPrefix(stopID, "WFELL") {
+            t.Log("Got incorrect stop ID:", stopID)
+            t.FailNow()
+        }
+    }
+
+    stopIDs, err = StopIDsFromName(db, "Bloopty Spoop")
+    if err == nil {
+        t.Log("Expected error when getting stop ID for nonexistent station", err)
+        t.FailNow()
+    }
+}
+
 
 func Test_TimeToTransfer(t *testing.T) {
     t.Parallel()
@@ -24,7 +55,7 @@ func Test_TimeToTransfer(t *testing.T) {
     }
 
     // Test a normal transfer
-    s, err := TimeToTransfer(db, "WFELL_S", "WFELL_S", "WOLF", confidentParseTime("09:40:00"))
+    s, err := TimeToTransfer(db, confidentParseTime("09:40:00"), "Winterfell", "Winterfell", "Wolf", "King's Landing")
     if err != nil {
         t.Log("Error calculating transfer time:", err)
         t.FailNow()
@@ -35,7 +66,7 @@ func Test_TimeToTransfer(t *testing.T) {
     }
 
     // Test a transfer that cycles through midnight
-    s, err = TimeToTransfer(db, "TWINS_N", "TWINS_E", "TROUT", confidentParseTime("15:12:00"))
+    s, err = TimeToTransfer(db, confidentParseTime("15:12:00"), "Twins", "Twins", "Trout", "Eyrie")
     if err != nil {
         t.Log("Error calculating transfer time:", err)
         t.FailNow()
@@ -46,7 +77,7 @@ func Test_TimeToTransfer(t *testing.T) {
     }
 
     // Test a transfer that doesn't exist
-    s, err = TimeToTransfer(db, "EYRIE_W", "DFORT_N", "WOLF", confidentParseTime("12:25:00"))
+    s, err = TimeToTransfer(db, confidentParseTime("12:25:00"), "Eyrie", "Dreadfort", "Wolf", "Winterfell")
     if err == nil {
         t.Log("Didn't get an error from TimeToTransfer when we should've")
         t.FailNow()
