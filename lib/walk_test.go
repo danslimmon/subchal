@@ -44,6 +44,56 @@ func Test_StopIDFromName(t *testing.T) {
 }
 
 
+func Test_StopGoingToward(t *testing.T) {
+    t.Parallel()
+    SetTestLogger(t)
+
+    db, err := sql.Open("sqlite3", "../test-data/subchal.sqlite")
+    if err != nil {
+        t.Log("Error opening SQLite database:", err)
+        t.FailNow()
+    }
+
+    stopID, err := StopGoingToward(db, []string{
+        "TWINS_TROUT",
+        "TWINS_WOLF",
+        "TWINS_N",
+        "TWINS_S",
+        "TWINS_W",
+        "TWINS_E",
+    }, []string{
+        "FEISL",
+        "FEISL_W",
+        "FEISL_E",
+    })
+    if err != nil {
+        t.Log("Failed to determine platform:", err)
+        t.FailNow()
+    }
+    for _, stopID := range stopIDs {
+        if stopID != "TWINS_W" {
+            t.Log("Got incorrect stop ID:", stopID)
+            t.FailNow()
+        }
+    }
+
+    stopID, err = StopGoingToward(db, []string{
+        "FEISL",
+        "FEISL_W",
+        "FEISL_E",
+    },
+    []string{
+        "KLAND_W",
+        "KLAND_E",
+        "KLAND",
+    })
+    if err == nil {
+        t.Log("Expected error when going toward disjunct station:", err)
+        t.FailNow()
+    }
+}
+
+
 func Test_TimeToTransfer(t *testing.T) {
     t.Parallel()
     SetTestLogger(t)

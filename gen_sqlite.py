@@ -2,6 +2,7 @@
 
 import sys
 import csv
+from collections import defaultdict
 
 print """CREATE TABLE routes ( 
             route_id STRING PRIMARY KEY,
@@ -81,3 +82,37 @@ with open('/'.join([sys.argv[1], 'transfers.txt'])) as csv_file:
     header = reader.next()
     for row in reader:
         print "INSERT INTO transfers (" + ", ".join(header) + ") VALUES " + '("' + '", "'.join(row) + '");'
+
+# Go back through stop_times and construct the table stop_connections
+# Each row represents that you can get from the platform `from_stop` to
+# the platform `to_stop` without a transfer.
+print """CREATE TABLE stop_connections (
+            from_stop_id STRING,
+            to_stop_id STRING,
+        );"""
+with open('/'.join([sys.argv[1], 'stop_times.txt'])) as csv_file:
+    reader = csv.reader(csv_file)
+    header = reader.next()
+
+    stop_seq = defaultdict(list)
+    for row in reader:
+        trip_id = row[0]
+        stop_id = row[3]
+        stop_sequence = row[4]
+        stop_seq[trip_id].append((stop_sequence, stop_id))
+
+    connections = defaultdict(set)
+    for trip_id in stop_seq.keys():
+        pairs = stop_seq[trip_id]
+        pairs.sort(lambda a, b: cmp(a[0], b[0]))
+        for i in range(len(pairs) - 1):
+            for j in range(i + 1, len(pairs)):
+                connections[trip_id].add((pairs[i][1], pairs[j][1]))
+
+    squashed_connections = set()
+    for trip_id, pairs in connections.iteritems():
+        for pair in pairs:
+            squashed_connections.add(pair)
+
+    for from_stop_id, to_stop_id in squashed_connections:
+        print "INSERT INTO stop_connections VALUES (" + from_stop_id + ", " + to_stop_id + ");"

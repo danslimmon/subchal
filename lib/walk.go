@@ -77,6 +77,33 @@ func StopIDsFromName(db *sql.DB, stopName string) ([]string, error) {
     return stopIDs, nil
 }
 
+// Finds the stop_id the station in fromStops with service to a station in toStops
+//
+// Returns only the first result found, if there's more than one result
+func StopGoingToward(db *sql.DB, []string fromStops, []string toStops) ([]string, error) {
+    stopIDs := make([]string, 0)
+    tripRows, err := db.Query(`
+        SELECT t.trip_id,
+        FROM stop_times st
+            JOIN trips t ON st.trip_id = t.trip_id
+        WHERE st.stop_id IN ?
+           OR st.stop_id IN ?
+        LIMIT 1;
+        `, fromStops, toStops)
+    if err != nil { return stopIDs, err }
+    for stopRows.Next() {
+        var stopID string
+        err = stopRows.Scan(&stopID)
+        if err != nil { return stopIDs, SimulationError{"Error getting stop ID from database"} }
+        stopIDs = append(stopIDs, stopID)
+    }
+    if len(stopIDs) < 1 {
+        return stopIDs, SimulationError{fmt.Sprintf("No station with name '%s'", stopName)}
+    }
+    return stopIDs, nil
+}
+
+
 
 // Determines the number of seconds it will take to transfer to the
 // given route from the given stop at the given time.
