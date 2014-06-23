@@ -88,7 +88,7 @@ with open('/'.join([sys.argv[1], 'transfers.txt'])) as csv_file:
 # the platform `to_stop` without a transfer.
 print """CREATE TABLE stop_connections (
             from_stop_id STRING,
-            to_stop_id STRING,
+            to_stop_id STRING
         );"""
 with open('/'.join([sys.argv[1], 'stop_times.txt'])) as csv_file:
     reader = csv.reader(csv_file)
@@ -115,4 +115,4 @@ with open('/'.join([sys.argv[1], 'stop_times.txt'])) as csv_file:
             squashed_connections.add(pair)
 
     for from_stop_id, to_stop_id in squashed_connections:
-        print "INSERT INTO stop_connections VALUES (" + from_stop_id + ", " + to_stop_id + ");"
+        print "INSERT INTO stop_connections (from_stop_id, to_stop_id) VALUES ('" + from_stop_id + "', '" + to_stop_id + "');"
